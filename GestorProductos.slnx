@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="GestorProductos.Business/GestorProductos.Business.csproj" />
+  <Project Path="GestorProductos.Common/GestorProductos.Common.csproj" />
+  <Project Path="GestorProductos.DataAcess/GestorProductos.DataAcess.csproj" />
+  <Project Path="GestorProductosUI/GestorProductosUI.csproj" />
+</Solution>
