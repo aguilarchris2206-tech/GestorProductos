@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GestorProductos.Common\GestorProductos.Common.csproj" />
-    <ProjectReference Include="..\GestorProductos.DataAcess\GestorProductos.DataAcess.csproj" />
+    <ProjectReference Include="..\GestorProductos.DataAccess\GestorProductos.DataAccess.csproj" />
   </ItemGroup>
 
 </Project>
