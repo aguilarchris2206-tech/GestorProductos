@@ -62,7 +62,7 @@ namespace GestorProductosUI
             if (dgvProductos.CurrentRow == null) return; // en caso que seleccionemos una celda sin datos (index 0)
 
             var p = (Producto)dgvProductos.CurrentRow.DataBoundItem; //Tomamos toda la celda de datos y la convertimos a tipo producto
-            
+
             //verificamos el resultado de la eleccion del message box
             if (MessageBox.Show($"Eliminar \"{p.Nombre}\"?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
@@ -70,6 +70,11 @@ namespace GestorProductosUI
                 CargarGrid(); // refrescar el dgv
                 lblStatus.Text = "Producto Eliminado con Exito!"; //actualizar el estado de la operacion en el lbl
             }
+        }
+
+        private void panelInput_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

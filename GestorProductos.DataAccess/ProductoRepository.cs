@@ -1,53 +1,84 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text.Json;
 using GestorProductos.Common;
-
 namespace GestorProductos.DataAccess
 {
     public class ProductoRepository
     {
-        //Creamos una lista estatica de productos
-        private static readonly List<Producto> _datos = new()
+        private readonly string _ruta;
+        public ProductoRepository()
         {
-            new Producto{Id=1, Nombre="Teclado mecánico", Precio=45000, Stock=15}, // instanciar objeto de tipo producto
-            new Producto{Id =2, Nombre="Mouse Inhalámbrico", Precio=18000, Stock=30},
-            new Producto{Id=3, Nombre="Monitor 27\"", Precio=185000, Stock=8},
-        };
-
-        public static int _nextId = 4; //Siguiente identificador en la lista
-        
-        //CRUD
-
-        // Definiendo un metodo para obtener todos los productos con estado activo en el repositorio
-        public List<Producto> ObtenerTodos() => _datos.Where(p => p.Activo).ToList();
-
-        public void Insertar(Producto producto) // Metodo para insertar productos nuevos
-        {
-            producto.Id = _nextId++; // asignar el id del producto
-            _datos.Add(producto); // agregar el producto en nuestra lista _datos
+            //definimos la ruta como el mismo folder donde esta el aplicativo.
+            //Es posible definir otra ruta? Si!
+            //Utilizamos algo como esto: string ruta = @"C:\MisCarpetas\GestorProductos\productos.json";
+            //Siempre y cuando la carpeta exista, de otra manera ocurre una excepcion
+            _ruta = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"productos.json");
         }
 
+        //Como ya no tenemos lista, necesitamos decirle al sistema como leer y escribir en la nueva fuente de datos
+        //Métodos privados de lectura/escritura
+        //Los metodos son privados para que nadie mas pueda accederlos
+        private List<Producto> Leer()
+        {
+            //comprobamos que el archivo existe, si no, retornamos una lista vacia de tipo producto
+            if (!File.Exists(_ruta)) return new List<Producto>();
+            
+            //Si el archivo existe, devolvemos la informacion contenida
+            string json = File.ReadAllText(_ruta);
+
+            //Puede pasar que el achivo exista y no tenga data, en ese caso validamos que sea asi y retornamos una lista de tipo producto vacia
+            return JsonSerializer.Deserialize<List<Producto>>(json)
+                ?? new List<Producto>();
+        }
+        private void Guardar(List<Producto> productos)
+        {
+            //Para guardar, utilizamos el serializer con las opciones vistas en la presentacion
+            var opciones = new JsonSerializerOptions {WriteIndented = true};
+
+            string json = JsonSerializer.Serialize(productos, opciones);
+
+            //Y escribimos el archivo en la ruta establecida
+            File.WriteAllText(_ruta, json);
+        }
+
+
+        //Métodos públicos (misma firma que antes)
+        public List<Producto> ObtenerTodos()
+        {
+            return Leer().Where(p => p.Activo).ToList();
+        }
+        public void Insertar(Producto producto)
+        {
+            var lista = Leer(); // leemos el contenido del archivo
+
+            //Any() pregunta si existe algun valor en la lista
+            // ? si existe un valor:
+            //Max() devuelve el valor mas alto y le sumamos 1 para guardar el nuevo id.
+            //si no existe ningun valor: asignele 1
+            producto.Id = lista.Any() ? lista.Max(p => p.Id) + 1 : 1;
+            lista.Add(producto);
+            Guardar(lista);
+        }
         public void Actualizar(Producto producto)
         {
-            // Definimos la variable ex para almacenar el producto de la lista datos que nos haga match con el id del producto que le pasamos por parametro
-            // FirstOrDefault = metodo para recorrer listas, y buscar elementos por algun parametro o valor
-            // ?? = Operador que sirve para verificar si el valor de una variable es null despues de un procedimiento
-            var ex = _datos.FirstOrDefault(p => p.Id == producto.Id)
-                ?? throw new Exception($"Producto ID {producto.Id} no encontrado!");
+            var lista = Leer(); //leemos el archivo
 
-            // Asignando valores a cada uno de los atributos del producto ex
-            ex.Nombre = producto.Nombre;
-            ex.Precio = producto.Precio;
-            ex.Stock = producto.Stock;
+            //verificamos que exista el dato que queremos modificar
+            var existente = lista.FirstOrDefault(p => p.Id == producto.Id)
+                ?? throw new Exception( $"Producto ID {producto.Id} no encontrado"); // si es nulo, devolvemos un msg de error
+            existente.Nombre = producto.Nombre;
+            existente.Precio = producto.Precio;
+            existente.Stock = producto.Stock;
+            Guardar(lista); //guardamos la lista modificada en el archivo
         }
-
-        public void Eliminar(int id) // Aqui no utilizamos un producto como parametro, ya que con solo el id es suficiente para identificarlo
+        public void Eliminar(int id)
         {
-            var ex = _datos.FirstOrDefault(p => p.Id == id) // Recorremos la lista buscando el match del id del producto
-                ?? throw new Exception($"Producto ID {id} no encontrado!"); // Si no aparece: lanzamos exception
+            var lista = Leer(); //leemos el archivo
 
-            ex.Activo = false; // Si aparece: marcamos el producto como inactivo
+            //verificar que el producto existe
+            var existente = lista.FirstOrDefault(p => p.Id == id)
+                ?? throw new Exception($"Producto ID {id} no encontrado"); //si null = no existe, retornar error
+            existente.Activo = false; //si existe, lo volvemos inactivo (activo = false)
+            Guardar(lista); //guardamos el archivo
         }
     }
 }
